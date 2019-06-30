@@ -1,13 +1,22 @@
-﻿using ApplicationCore.Interfaces;
+﻿using ApplicationCore.Chat.Domain;
+using ApplicationCore.Interfaces;
+using ApplicationCore.Users.Selectors;
 using FluentValidation;
 using MediatR;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 namespace ApplicationCore.Chat.Commands
 {
-    public class SendMessageCommand : IRequest<bool>
+    public class SendMessageCommand : IRequest<SendMessageCommandResult>
     {
         public string Content { get; set; }
+        public ClaimsPrincipal User { get; set; }
+    }
+
+    public class SendMessageCommandResult
+    {
+        public int Id { get; set; }
     }
 
     public class SendMessageCommandValidator : AbstractValidator<SendMessageCommand>
@@ -18,7 +27,8 @@ namespace ApplicationCore.Chat.Commands
         }
     }
 
-    public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, bool>
+    public class SendMessageCommandHandler
+        : IRequestHandler<SendMessageCommand, SendMessageCommandResult>
     {
         private readonly IAppDbContext dbContext;
 
@@ -27,9 +37,21 @@ namespace ApplicationCore.Chat.Commands
             this.dbContext = dbContext;
         }
 
-        public async Task<bool> Handle(SendMessageCommand request, CancellationToken cancellationToken)
+        public async Task<SendMessageCommandResult> Handle(
+            SendMessageCommand request,
+            CancellationToken cancellationToken)
         {
-            return false;
+            var applicationUser = await this.dbContext.Users.FromClaims(
+                request.User,
+                cancellationToken);
+            var msg = new Message(request.Content, applicationUser);
+            this.dbContext.Messages.Add(msg);
+            await this.dbContext.SaveChangesAsync(cancellationToken);
+
+            return new SendMessageCommandResult
+            {
+                Id = msg.MessageId
+            };
         }
     }
 }

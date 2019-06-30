@@ -1,7 +1,10 @@
 ﻿using ApplicationCore.Chat.Commands;
+using ApplicationCore.Chat.Domain;
+using ApplicationCore.Chat.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Web.Controllers
@@ -20,8 +23,14 @@ namespace Web.Controllers
 
         public async Task<IActionResult> SendMessage(SendMessageCommand command)
         {
-            await this.mediator.Send(command);
-            return this.Ok();
+            var messageId = await this.mediator.Send(command);
+            return this.Ok(messageId);
+        }
+
+        public async Task<IEnumerable<Message>> GetMessages()
+        {
+            var result = await this.mediator.Send(new Top50MessagesQuery());
+            return result.Messages;
         }
     }
 }
