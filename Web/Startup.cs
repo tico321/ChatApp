@@ -1,6 +1,10 @@
+using ApplicationCore.Chat.Commands;
 using ApplicationCore.Interfaces;
+using ApplicationCore.RequestExtensions;
 using ApplicationCore.Users.Domain;
+using FluentValidation;
 using Infrastructure.Data;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +14,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
+using System.Reflection;
 
 namespace Web
 {
@@ -32,13 +38,23 @@ namespace Web
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            // Db Context
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseInMemoryDatabase("AppDatabase"));
-            services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
+            services.AddScoped<IAppDbContext, ApplicationDbContext>();
             services.AddDefaultIdentity<ApplicationUser>()
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+            // Register MediaR Commands and Queries
+            services.AddMediatR(typeof(SendMessageCommand).GetTypeInfo().Assembly);
+            // Register All Commands and Queries Validators
+            typeof(SendMessageCommand).Assembly.GetTypes()
+                .Where(type => typeof(IValidator).IsAssignableFrom(type))
+                .ToList()
+                .ForEach(type => services.AddTransient(typeof(IValidator), type));
+            // Add pipeline to validate all messages before they are processed
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }

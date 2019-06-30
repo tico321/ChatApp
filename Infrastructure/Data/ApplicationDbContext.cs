@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.Data
 {
     public class ApplicationDbContext
-        : IdentityDbContext<ApplicationUser>, IApplicationDbContext
+        : IdentityDbContext<ApplicationUser>, IAppDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> optionsBuilder)
             : base(optionsBuilder)

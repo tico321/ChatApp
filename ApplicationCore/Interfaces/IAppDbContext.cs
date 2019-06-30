@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace ApplicationCore.Interfaces
 {
-    public interface IApplicationDbContext
+    public interface IAppDbContext
     {
         DbSet<ApplicationUser> Users { get; set; }
 
