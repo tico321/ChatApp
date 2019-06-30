@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Web.Pages
@@ -13,7 +14,7 @@ namespace Web.Pages
     {
         private readonly IMediator mediator;
 
-        public IEnumerable<Message> Messages { get; set; }
+        public IEnumerable<MessageView> Messages { get; set; }
 
         public IndexModel(IMediator mediator)
         {
@@ -23,7 +24,7 @@ namespace Web.Pages
         public async Task OnGetAsync()
         {
             var result = await this.mediator.Send(new Top50MessagesQuery());
-            this.Messages = result.Messages;
+            this.Messages = result.Messages.Select(m => m.ToView());
         }
     }
 }

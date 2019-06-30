@@ -1,8 +1,8 @@
-﻿@model IEnumerable<Message>
+﻿@model IEnumerable<MessageView>
 
 @foreach (var message in @Model)
 {
     <p>
-        @message.CreationDate.ToLongDateString() @message.User.Email : @message.Content
+        @message.Date <b>@message.Email</b> : @message.Content
     </p>
 }

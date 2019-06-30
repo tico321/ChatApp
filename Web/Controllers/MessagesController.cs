@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Web.Controllers
@@ -28,7 +29,9 @@ namespace Web.Controllers
             return new PartialViewResult
             {
                 ViewName = "~/Pages/_ChatList.cshtml",
-                ViewData = new ViewDataDictionary<IEnumerable<Message>>(ViewData, result.Messages)
+                ViewData = new ViewDataDictionary<IEnumerable<MessageView>>(
+                    ViewData,
+                    result.Messages.Select(m => m.ToView()))
             };
         }
     }

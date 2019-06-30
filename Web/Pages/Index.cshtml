@@ -16,7 +16,7 @@
         width: 100%;
         height: 85%;
         padding: 10px;
-        overflow: scroll;
+        overflow-y: scroll;
     }
 
     .submit-messages-container {
@@ -42,7 +42,24 @@
 </div>
 
 <script>
+    function setupSignalR() {
+        var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+        connection.on("NewMessage", function () {
+            $(".messages-container").load('/Messages');
+        });
+        connection.start()
+            .then(function () {
+                console.log('connected to chatHub!');
+            }).catch(function (err) {
+                return console.error(err.toString());
+            });
+
+        return connection;
+    }
+
     $(function () {
+        var connection = setupSignalR();
+
         $('#submitMessageForm').submit(function (e) {
             e.preventDefault();
             var content = $("#sendMessageInput").val();
@@ -53,8 +70,11 @@
                 data: JSON.stringify({ content }),
                 contentType: 'application/json',
                 success: function (e) {
-                    console.log(e);
                     $(".messages-container").load('/Messages');
+                    $("#sendMessageInput").val("");
+                    connection.invoke("NewMessage").catch(function (err) {
+                        return console.error(err.toString());
+                    });
                 },
                 error: function (xhr, textStatus, errorThrown) { console.log({ xhr, textStatus, errorThrown }); }
             })

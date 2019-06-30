@@ -16,7 +16,6 @@ namespace ApplicationCore.Users.Selectors
         {
             var email = user.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
             return users
-                .AsNoTracking()
                 .Where(u => u.Email == email)
                 .FirstOrDefaultAsync(cancellationToken);
         }
