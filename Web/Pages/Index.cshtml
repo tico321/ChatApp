@@ -76,7 +76,12 @@
                         return console.error(err.toString());
                     });
                 },
-                error: function (xhr, textStatus, errorThrown) { console.log({ xhr, textStatus, errorThrown }); }
+                error: function (xhr, textStatus, errorThrown) {
+                    console.log({ xhr, textStatus, errorThrown });
+                    if (xhr.status == 401) {
+                        document.location.href = '/Identity/Account/Login'
+                    }
+                }
             })
         });
     });

@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Reflection;
+using Web.Filters;
 using Web.Hubs;
 
 [assembly: ApiConventionType(typeof(DefaultApiConventions))]
@@ -58,7 +59,11 @@ namespace Web
             // Add pipeline to validate all messages before they are processed
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvc(options =>
+                {
+                    options.Filters.Add(typeof(GlobalErrorFilter));
+                })
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             services.AddSignalR();
         }
