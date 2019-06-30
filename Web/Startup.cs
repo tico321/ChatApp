@@ -1,3 +1,6 @@
+using ApplicationCore.Interfaces;
+using ApplicationCore.Users.Domain;
+using Infrastructure.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -7,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Web.Data;
 
 namespace Web
 {
@@ -32,7 +34,8 @@ namespace Web
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseInMemoryDatabase("AppDatabase"));
-            services.AddDefaultIdentity<IdentityUser>()
+            services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
+            services.AddDefaultIdentity<ApplicationUser>()
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
