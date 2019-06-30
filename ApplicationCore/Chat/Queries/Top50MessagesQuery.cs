@@ -32,6 +32,7 @@ namespace ApplicationCore.Chat.Queries
             CancellationToken cancellationToken)
         {
             var messages = await this.dbContext.Messages
+                .Include(m => m.User)
                 .AsNoTracking()
                 .OrderByDescending(m => m.CreationDate)
                 .Take(50)

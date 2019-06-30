@@ -1,4 +1,5 @@
 ﻿using ApplicationCore.Chat.Domain;
+using ApplicationCore.Exceptions;
 using ApplicationCore.Interfaces;
 using ApplicationCore.Users.Selectors;
 using FluentValidation;
@@ -6,6 +7,7 @@ using MediatR;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+
 namespace ApplicationCore.Chat.Commands
 {
     public class SendMessageCommand : IRequest<SendMessageCommandResult>
@@ -44,6 +46,12 @@ namespace ApplicationCore.Chat.Commands
             var applicationUser = await this.dbContext.Users.FromClaims(
                 request.User,
                 cancellationToken);
+
+            if (applicationUser == null)
+            {
+                throw new UnAuthorizedException();
+            }
+
             var msg = new Message(request.Content, applicationUser);
             this.dbContext.Messages.Add(msg);
             await this.dbContext.SaveChangesAsync(cancellationToken);
