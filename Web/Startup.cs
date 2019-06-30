@@ -17,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Reflection;
 
+[assembly: ApiConventionType(typeof(DefaultApiConventions))]
 namespace Web
 {
     public class Startup
