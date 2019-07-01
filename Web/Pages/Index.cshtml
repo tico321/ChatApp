@@ -80,6 +80,9 @@
                     console.log({ xhr, textStatus, errorThrown });
                     if (xhr.status == 401) {
                         document.location.href = '/Identity/Account/Login'
+                    } else {
+                        var json = JSON.parse(xhr.responseText);
+                        alert(JSON.stringify(json.errors));
                     }
                 }
             })

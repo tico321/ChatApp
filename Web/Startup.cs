@@ -3,6 +3,7 @@ using ApplicationCore.Interfaces;
 using ApplicationCore.RequestExtensions;
 using ApplicationCore.Users.Domain;
 using FluentValidation;
+using Infrastructure.Bot;
 using Infrastructure.Data;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -14,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Linq;
 using System.Reflection;
 using Web.Filters;
@@ -58,6 +60,20 @@ namespace Web
                 .ForEach(type => services.AddTransient(typeof(IValidator), type));
             // Add pipeline to validate all messages before they are processed
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
+
+            services.AddSingleton((serviceProvider) =>
+                new BotConfiguration
+                {
+                    BaseUrl = Configuration["Bot:BaseUrl"]
+                });
+            services.AddHttpClient(BotService.ClientName, (serviceProvider, client) =>
+            {
+                var config = serviceProvider.GetService<BotConfiguration>();
+                client.BaseAddress = new Uri(config.BaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(5);
+            });
+
+            services.AddSingleton<IBotService, BotService>();
 
             services.AddMvc(options =>
                 {

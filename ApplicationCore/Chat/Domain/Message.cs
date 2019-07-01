@@ -19,6 +19,16 @@ namespace ApplicationCore.Chat.Domain
             this.CreationDate = DateTime.Now;
         }
 
+        public bool IsCommand()
+        {
+            return this.Content.StartsWith("/");
+        }
+
+        public CommandMessage ToMessageCommand()
+        {
+            return new CommandMessage(this.Content);
+        }
+
         public MessageView ToView()
         {
             return new MessageView

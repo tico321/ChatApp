@@ -33,10 +33,12 @@ namespace ApplicationCore.Chat.Commands
         : IRequestHandler<SendMessageCommand, SendMessageCommandResult>
     {
         private readonly IAppDbContext dbContext;
+        private readonly IBotService botService;
 
-        public SendMessageCommandHandler(IAppDbContext dbContext)
+        public SendMessageCommandHandler(IAppDbContext dbContext, IBotService botService)
         {
             this.dbContext = dbContext;
+            this.botService = botService;
         }
 
         public async Task<SendMessageCommandResult> Handle(
@@ -53,6 +55,13 @@ namespace ApplicationCore.Chat.Commands
             }
 
             var msg = new Message(request.Content, applicationUser);
+
+            if (msg.IsCommand())
+            {
+                await this.botService.SendCommand(msg.ToMessageCommand(), cancellationToken);
+                return new SendMessageCommandResult { Id = -1 };
+            }
+
             this.dbContext.Messages.Add(msg);
             await this.dbContext.SaveChangesAsync(cancellationToken);
 
