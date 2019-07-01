@@ -33,20 +33,21 @@ namespace Infrastructure.Bot
                 JsonConvert.SerializeObject(commandMessage.ToDto()),
                 Encoding.UTF8,
                 "application/json");
-            var response = await client.PostAsync(
+            using(var response = await client.PostAsync(
                 $"{this.config.BaseUrl}/api/Commands",
-                body);
-
-            if (response.StatusCode != HttpStatusCode.NoContent)
+                body))
             {
-                throw new BadRequestException(
-                    new List<(string, string)>
-                    {
-                        ("BotSendCommand", response.ReasonPhrase)
-                    });
-            }
+                if (response.StatusCode != HttpStatusCode.NoContent)
+                {
+                    throw new BadRequestException(
+                        new List<(string, string)>
+                        {
+                            ("BotSendCommand", response.ReasonPhrase)
+                        });
+                }
 
-            return true;
+                return true;
+            }
         }
     }
 }

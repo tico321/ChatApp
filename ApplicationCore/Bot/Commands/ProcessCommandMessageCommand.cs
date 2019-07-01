@@ -1,6 +1,8 @@
 ﻿using ApplicationCore.Chat.Domain;
+using ApplicationCore.Interfaces;
 using FluentValidation;
 using MediatR;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,20 +22,39 @@ namespace ApplicationCore.Bot.Commands
     {
         public ProcessCommandMessageCommandValidator()
         {
-            this.RuleFor(x => x);
+            this.RuleFor(c => c.Command).NotNull();
+            this.RuleFor(c => c.Command.Command).NotNull().NotEmpty();
         }
     }
 
     public class ProcessCommandMessageCommandHandler : IRequestHandler<ProcessCommandMessageCommand, ProcessCommandMessageCommandResult>
     {
-
-        public ProcessCommandMessageCommandHandler()
+        private readonly IStockService stockService;
+        public ProcessCommandMessageCommandHandler(IStockService stockService)
         {
+            this.stockService = stockService;
         }
 
-        public async Task<ProcessCommandMessageCommandResult> Handle(ProcessCommandMessageCommand request, CancellationToken cancellationToken)
+        public Task<ProcessCommandMessageCommandResult> Handle(
+            ProcessCommandMessageCommand request,
+            CancellationToken cancellationToken)
         {
-            return null;
+            switch(request.Command.Type)
+            {
+                case MessageCommandType.Stock:
+                    return this.ProcessStockCommand(request.Command.Command, cancellationToken);
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        private async Task<ProcessCommandMessageCommandResult> ProcessStockCommand(
+            string company,
+            CancellationToken cancellationToken)
+        {
+            var stock = await this.stockService.GetStock(company, cancellationToken);
+
+            return new ProcessCommandMessageCommandResult();
         }
     }
 }

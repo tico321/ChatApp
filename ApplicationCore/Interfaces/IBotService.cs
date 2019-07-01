@@ -10,9 +10,4 @@ namespace ApplicationCore.Interfaces
             CommandMessage commandMessage,
             CancellationToken cancellationToken);
     }
-
-    public class BotConfiguration
-    {
-        public string BaseUrl { get; set; }
-    }
 }
