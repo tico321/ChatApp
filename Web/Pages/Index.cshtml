@@ -35,7 +35,7 @@
                 <input class="w-100 p-2 form-control" type="text" id="sendMessageInput" placeholder="Type a Message">
             </div>
             <div class="col-2">
-                <button type="submit" class="btn btn-primary mb-2 w-100 mt-2">Send</button>
+                <button id="submitButton" type="submit" class="btn btn-primary mb-2 w-100 mt-2">Send</button>
             </div>
         </form>
     </div>
@@ -59,9 +59,17 @@
 
     $(function () {
         var connection = setupSignalR();
-
+        function disableForm() {
+            $('#submitButton').attr('disabled', true);
+            $('#sendMessageInput').attr('disabled', true);
+        }
+        function enableForm() {
+            $('#submitButton').removeAttr('disabled');
+            $('#sendMessageInput').removeAttr('disabled');
+        }
         $('#submitMessageForm').submit(function (e) {
             e.preventDefault();
+            disableForm();
             var content = $("#sendMessageInput").val();
             if (!content) return;
             $.ajax({
@@ -72,12 +80,14 @@
                 success: function (e) {
                     $(".messages-container").load('/Messages');
                     $("#sendMessageInput").val("");
+                    enableForm();
                     connection.invoke("NewMessage").catch(function (err) {
                         return console.error(err.toString());
                     });
                 },
                 error: function (xhr, textStatus, errorThrown) {
                     console.log({ xhr, textStatus, errorThrown });
+                    enableForm();
                     if (xhr.status == 401) {
                         document.location.href = '/Identity/Account/Login'
                     } else {

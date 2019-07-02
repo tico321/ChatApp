@@ -1,12 +1,16 @@
 ﻿using ApplicationCore.Bot.Commands;
+using ApplicationCore.Interfaces;
 using ApplicationCore.RequestExtensions;
 using FluentValidation;
+using Infrastructure.Messaging;
+using Infrastructure.Stock;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -33,6 +37,31 @@ namespace Bot
                 .ForEach(type => services.AddTransient(typeof(IValidator), type));
             // Add pipeline to validate all messages before they are processed
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
+
+            // Stock
+            services.AddSingleton((serviceProvider) =>
+                new StockConfiguration
+                {
+                    BaseUrl = Configuration["Stock:BaseUrl"]
+                });
+            services.AddScoped<IStockService, StockService>();
+            services.AddHttpClient(StockService.ClientName, (serviceProvider, client) =>
+            {
+                var config = serviceProvider.GetService<StockConfiguration>();
+                client.BaseAddress = new Uri(config.BaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(5);
+            });
+
+            // Messaging
+            services.AddSingleton((serviceProvider) =>
+                new RabbitMQConfig
+                {
+                    HostName = Configuration["RabbitMQ:HostName"],
+                    Port = int.Parse(Configuration["RabbitMQ:Port"]),
+                    User = Configuration["RabbitMQ:User"],
+                    Password = Configuration["RabbitMQ:Pass"]
+                });
+            services.AddScoped<IMessagingService, RabbitMQMessagingService>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }

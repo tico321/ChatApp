@@ -5,6 +5,7 @@ using ApplicationCore.Users.Domain;
 using FluentValidation;
 using Infrastructure.Bot;
 using Infrastructure.Data;
+using Infrastructure.Messaging;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using Web.Filters;
 using Web.Hubs;
 
@@ -61,6 +63,7 @@ namespace Web
             // Add pipeline to validate all messages before they are processed
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
 
+            // Bot Service
             services.AddSingleton((serviceProvider) =>
                 new BotConfiguration
                 {
@@ -72,8 +75,23 @@ namespace Web
                 client.BaseAddress = new Uri(config.BaseUrl);
                 client.Timeout = TimeSpan.FromSeconds(5);
             });
-
             services.AddSingleton<IBotService, BotService>();
+
+            // Messaging
+            services.AddSingleton((serviceProvider) =>
+                new RabbitMQConfig
+                {
+                    HostName = Configuration["RabbitMQ:HostName"],
+                    Port = int.Parse(Configuration["RabbitMQ:Port"]),
+                    User = Configuration["RabbitMQ:User"],
+                    Password = Configuration["RabbitMQ:Pass"]
+                });
+            services.AddSingleton<IMessagingService, RabbitMQMessagingService>();
+
+            // Broadcast
+            services.AddScoped<IBroadcastService, BroadcastService>();
+
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             services.AddMvc(options =>
                 {
@@ -85,7 +103,11 @@ namespace Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(
+            IApplicationBuilder app,
+            IHostingEnvironment env,
+            IServiceProvider serviceProvider,
+            IApplicationLifetime applicationLifetime)
         {
             if (env.IsDevelopment())
             {
@@ -111,6 +133,35 @@ namespace Web
             });
 
             app.UseMvc();
+
+            // Setting up rabbitmq consumer
+            // This is a workaround implemented due to time constraints
+            var messagingService = serviceProvider.GetService<IMessagingService>();
+            ServiceProviderReference.ServiceProvider = app.ApplicationServices;
+            messagingService.RegisterHandler<HandleQueuedMessageCommand>(
+                ApplicationCore.Chat.Domain.Constants.MessagingQueue,
+                msg =>
+                {
+                    var sp = ServiceProviderReference.ServiceProvider;
+                    using(var scope = sp.CreateScope())
+                    {
+                        var handler = scope.ServiceProvider
+                            .GetService<IRequestHandler<HandleQueuedMessageCommand, HandleQueuedMessageCommandResult>>();
+                        var t = handler.Handle(msg, new CancellationToken()).Result;
+                    }
+                });
+            applicationLifetime.ApplicationStopping.Register(() => OnShutDown(serviceProvider));
+        }
+
+        public class ServiceProviderReference
+        {
+            public static IServiceProvider ServiceProvider { get; set; }
+        }
+
+        private void OnShutDown(IServiceProvider sp)
+        {
+            var messaging = (RabbitMQMessagingService)sp.GetService<IMessagingService>();
+            messaging.Dispose();
         }
     }
 }

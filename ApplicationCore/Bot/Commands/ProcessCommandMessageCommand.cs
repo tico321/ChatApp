@@ -1,4 +1,5 @@
-﻿using ApplicationCore.Chat.Domain;
+﻿using ApplicationCore.Chat.Commands;
+using ApplicationCore.Chat.Domain;
 using ApplicationCore.Interfaces;
 using FluentValidation;
 using MediatR;
@@ -30,9 +31,14 @@ namespace ApplicationCore.Bot.Commands
     public class ProcessCommandMessageCommandHandler : IRequestHandler<ProcessCommandMessageCommand, ProcessCommandMessageCommandResult>
     {
         private readonly IStockService stockService;
-        public ProcessCommandMessageCommandHandler(IStockService stockService)
+        private readonly IMessagingService messagingService;
+
+        public ProcessCommandMessageCommandHandler(
+            IStockService stockService,
+            IMessagingService messagingService)
         {
             this.stockService = stockService;
+            this.messagingService = messagingService;
         }
 
         public Task<ProcessCommandMessageCommandResult> Handle(
@@ -53,6 +59,15 @@ namespace ApplicationCore.Bot.Commands
             CancellationToken cancellationToken)
         {
             var stock = await this.stockService.GetStock(company, cancellationToken);
+            var msg = $"{stock.Symbol} quote is {stock.Open} per share";
+            await this.messagingService.Send(
+                ApplicationCore.Chat.Domain.Constants.MessagingQueue,
+                new HandleQueuedMessageCommand
+                {
+                    Content = msg,
+                    UserEmail = "bot@chat.com"
+                }
+            );
 
             return new ProcessCommandMessageCommandResult();
         }
