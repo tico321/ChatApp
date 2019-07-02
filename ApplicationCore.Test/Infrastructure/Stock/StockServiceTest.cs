@@ -9,7 +9,7 @@ namespace ApplicationCore.Test.Infrastructure.Stock
 {
     public class StockServiceTest
     {
-        [Fact(Skip = "Test intended for manual integration testing")]
+        [Fact(Skip = "Test helper for manual integration testing")]
         public async Task GetStock()
         {
             var sut = this.GetSut();

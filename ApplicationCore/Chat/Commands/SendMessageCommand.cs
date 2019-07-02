@@ -25,7 +25,7 @@ namespace ApplicationCore.Chat.Commands
     {
         public SendMessageCommandValidator()
         {
-            this.RuleFor(m => m.Content).NotNull().NotEmpty().MaximumLength(500);
+            this.RuleFor(m => m.Content).NotNull().NotEmpty().MaximumLength(100);
         }
     }
 

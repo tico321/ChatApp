@@ -26,7 +26,7 @@ namespace ApplicationCore.Chat.Commands
         public HandleQueuedMessageCommandValidator()
         {
             this.RuleFor(m => m.Content).NotNull().NotEmpty();
-            this.RuleFor(m => m.UserEmail).NotNull().NotEmpty();
+            this.RuleFor(m => m.UserEmail).NotNull().NotEmpty().EmailAddress();
         }
     }
 

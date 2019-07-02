@@ -71,7 +71,6 @@
             e.preventDefault();
             disableForm();
             var content = $("#sendMessageInput").val();
-            if (!content) return;
             $.ajax({
                 type: 'post',
                 url: '/api/Messages',
